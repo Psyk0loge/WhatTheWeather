@@ -7,31 +7,29 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Scanner;
 
 public class RequestWeather {
-    private class Weather{
-        int id;
-        String longitude;
-        String latitude;
-        String main;
-        String description;
-        double temperature;
-        double temperatureMIN;
-        double getTemperatureMAX;
-        double windSpeed;
+    //URL parts that are fixed to put together ur with user input
+    private static final String WebsideForRequest ="http://api.openweathermap.org/data/2.5/weather?q=";
+    private static final String appid= "f83e506f73bdb831078f69cfbda65b7f";
+    private static  final String URLmidCode ="&units=metric&appid=";
 
-    };
     private static HttpURLConnection connection;
     public static void main(String[] args) {
-        //2 ways for HTTP request in JAVA
-        //Method 1 Java.net.httpURLConnection
         BufferedReader reader;
-        //to read each line to build our response together...
         String line;
         StringBuffer responseContent = new StringBuffer();
 
         try {
-            URL url = new URL("http://api.openweathermap.org/data/2.5/weather?q=Mannheim&units=metric&appid=f83e506f73bdb831078f69cfbda65b7f");
+            System.out.println("Von was für einer Stadt wollen Sie das Wetter wissen?");
+            String city;
+            Scanner scan = new Scanner(System.in);
+            city = scan.nextLine();
+            scan.close();
+            //URL url = new URL("http://api.openweathermap.org/data/2.5/weather?q=Mannheim&units=metric&appid=f83e506f73bdb831078f69cfbda65b7f");
+            String URLString = WebsideForRequest + city + URLmidCode +appid;
+            URL url = new URL(URLString);
             connection= (HttpURLConnection) url.openConnection();
             //Request Setup
             connection.setRequestMethod("GET");
