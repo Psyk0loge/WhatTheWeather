@@ -7,6 +7,9 @@
 # BlueJ files
 *.ctxt
 
+# ignore .iml files
+WhatTheWeather.iml
+
 # Preferences of inteliJ
 .idea
 
