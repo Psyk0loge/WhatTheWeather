@@ -10,25 +10,98 @@ import java.net.URL;
 import java.util.Scanner;
 
 public class RequestWeather {
-    //URL parts that are fixed to put together ur with user input
-    private static final String WebsideForRequest ="http://api.openweathermap.org/data/2.5/weather?q=";
-    private static final String appid= "f83e506f73bdb831078f69cfbda65b7f";
-    private static  final String URLmidCode ="&units=metric&appid=";
+    //Api-Key
+    private static final String appid= "9ffde3100f0029f1e405581994739b1e";
 
+    //URL parts to get the longitude and the latitude
+    private static final String WebsideForRequest ="http://api.openweathermap.org/data/2.5/weather?q=";
+    private static  final String URLmidCode ="&units=metric&appid=";
     private static HttpURLConnection connection;
+
+    //URL stuff to get the data
+    private static final String WebsideDataRequest ="https://api.openweathermap.org/data/2.5/onecall?";
+    private static String URLmidDataRequest = "&%20exclude=hourly&appid=";
+    private static String LatURL="lat=";
+    private static String LonURL="&lon=";
+
+    //changable lon and lat Strings for dynamic request
+    public static double Lat;
+    public static double Lon;
+
+
     public static void main(String[] args) {
+        currentWeather a = verbindung(true);
+        System.out.println(a.getTemp());
+    }
+    public static void parse1(String response){
+        JSONObject WeatherStats = new JSONObject(response);
+        double lon = WeatherStats.getJSONObject("coord").getDouble("lon");
+        double lat = WeatherStats.getJSONObject("coord").getDouble("lat");
+        Lon = lon;
+        Lat = lat;
+        System.out.println(lon);
+        System.out.println(lat);
+        double[] geoData = {lon,lat};
+    }
+    private static class currentWeather{
+       private double temp;
+       private String description;
+       private double temperaturin1h;
+       //Konstruktoren
+        public void setTemp(double gradKelvin){
+            double Umrechentemp=gradKelvin-273.15;
+           Umrechentemp= Umrechentemp *100;
+           Umrechentemp = Math.round(Umrechentemp);
+           Umrechentemp = Umrechentemp/100;
+           this.temp=Umrechentemp;
+        }
+
+        public currentWeather(double temp, String description, double temperaturin1h) {
+            setTemp(temp);
+            this.description = description;
+            this.temperaturin1h = temperaturin1h;
+        }
+        public currentWeather(){
+
+        }
+
+        public double getTemp() {
+            return temp;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+    }
+    public static currentWeather parse2(String responseBody){
+        JSONObject currentWeather = new JSONObject(responseBody);
+        double temp = currentWeather.getJSONObject("current").getDouble("temp");
+        double temperaturin1h  = currentWeather.getJSONArray("hourly").getJSONObject(0).getDouble("temp");
+        String description = currentWeather.getJSONObject("current").getJSONArray("weather").getJSONObject(0).getString("description");
+       //currentWeather currentWeather1 = new currentWeather(J)
+        currentWeather a = new currentWeather(temp, description, temperaturin1h);
+        System.out.println(temp +" "+description+ " "+temperaturin1h);
+        return a;
+    }
+
+    public static currentWeather verbindung(boolean geoAbfrage){
+        String URLString;
         BufferedReader reader;
         String line;
         StringBuffer responseContent = new StringBuffer();
-
-        try {
+        currentWeather b = new currentWeather();
+        if(geoAbfrage){
             System.out.println("Von was für einer Stadt wollen Sie das Wetter wissen?");
             String city;
             Scanner scan = new Scanner(System.in);
             city = scan.nextLine();
             scan.close();
-            //URL url = new URL("http://api.openweathermap.org/data/2.5/weather?q=Mannheim&units=metric&appid=f83e506f73bdb831078f69cfbda65b7f");
-            String URLString = WebsideForRequest + city + URLmidCode +appid;
+            URLString = WebsideForRequest + city + URLmidCode +appid;
+        }else{
+            URLString = WebsideDataRequest + LatURL+Lat+LonURL+Lon+URLmidDataRequest+appid;;
+        }
+        try {
             URL url = new URL(URLString);
             connection= (HttpURLConnection) url.openConnection();
             //Request Setup
@@ -54,8 +127,14 @@ public class RequestWeather {
                 }
                 reader.close();
             }
-            System.out.println(responseContent.toString());
-            parse(responseContent.toString());
+            if(geoAbfrage){
+                parse1(responseContent.toString());
+               b= verbindung(false);
+                connection.disconnect();
+            }else{
+                System.out.println(Lon+" "+Lat);
+                b= parse2(responseContent.toString());
+            }
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -63,18 +142,6 @@ public class RequestWeather {
         }finally{
             connection.disconnect();
         }
-    }
-    public static String parse(String responseBody){
-        //loop fro JSon array to get information for each Opject in the array
-
-       JSONObject WeatherStats = new JSONObject(responseBody);
-       String weather = WeatherStats.getJSONArray("weather").getJSONObject(0).getString("description");
-        System.out.println(weather);
-       double temp = WeatherStats.getJSONObject("main").getDouble("temp");
-       System.out.println(temp);
-       String city = WeatherStats.getString("name");
-       System.out.println(city);
-
-        return null;
+        return b;
     }
 }
